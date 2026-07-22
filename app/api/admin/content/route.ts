@@ -1,0 +1,4 @@
+import { getDb } from "../../../../db";
+import { siteContent } from "../../../../db/schema";
+import { requireAdmin } from "../_auth";
+export async function POST(request: Request) { try { await requireAdmin(); const form = await request.formData(); const title = String(form.get("title") || "").trim(); const body = String(form.get("body") || "").trim(); if (!title || !body) return new Response("Headline and message are required", { status: 400 }); await getDb().insert(siteContent).values({ key: "sunday-welcome", title, body, updatedAt: new Date() }).onConflictDoUpdate({ target: siteContent.key, set: { title, body, updatedAt: new Date() } }); return Response.redirect(new URL("/admin?updated=content", request.url), 303); } catch (error) { return new Response(error instanceof Error ? error.message : "Unable to publish", { status: error instanceof Error && error.message === "Unauthorized" ? 401 : 500 }); } }
