@@ -1,0 +1,7 @@
+.nav .logo-only img { width: 146px; }
+.footer-brand.logo-only img { width: 190px; }
+
+@media (max-width: 760px) {
+  .nav .logo-only img { width: 118px; }
+  .footer-brand.logo-only img { width: 158px; }
+}
