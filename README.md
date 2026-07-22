@@ -92,6 +92,21 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
 
+## Deploying this repository to Cloudflare
+
+This project uses D1 for the staff portal and R2 for sermon audio. The original
+starter placeholder D1 id is valid only for local previews, not for a live
+Cloudflare deployment.
+
+1. Create a D1 database in the target Cloudflare account (for example,
+   `burt-baptist-church`) and copy its database UUID.
+2. In the Cloudflare project's build environment, add `D1_DATABASE_ID` with
+   that UUID and `D1_DATABASE_NAME` with the database name.
+3. Apply [`drizzle/0000_mature_the_call.sql`](drizzle/0000_mature_the_call.sql)
+   in the D1 console before enabling staff uploads.
+4. Deploy again. The R2 `SERMONS` binding is provisioned by Wrangler when it is
+   absent; do not change its binding name.
+
 ## Learn More
 
 - [vinext Documentation](https://github.com/cloudflare/vinext)
