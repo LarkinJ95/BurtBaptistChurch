@@ -4,6 +4,7 @@ import "./globals.css";
 import "./brand.css";
 import "./remove-give.css";
 import "./logo-scale.css";
+import "./pages.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
