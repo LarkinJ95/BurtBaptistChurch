@@ -7,6 +7,7 @@ import { staffUsers } from "../db/schema";
 const COOKIE_NAME = "burt_staff_session";
 const SESSION_SECONDS = 60 * 60 * 12;
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 type AuthEnv = { ADMIN_EMAIL?: string; ADMIN_PASSWORD?: string };
 const authEnv = () => env as unknown as AuthEnv;
@@ -61,19 +62,25 @@ export async function authenticateStaff(emailInput: string, password: string) {
 
 export async function createSession(email: string, sessionKey: string) {
   const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  const payload = `${email}.${expires}`;
+  const payload = `${base64Url(encoder.encode(email))}.${expires}`;
   return `${payload}.${await sign(payload, sessionKey)}`;
 }
 
 export async function getCurrentAdmin() {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
-  const [email, expires, signature] = token.split(".");
-  if (!email || !expires || !signature || Number(expires) < Math.floor(Date.now() / 1000)) return null;
+  const [encodedEmail, expires, signature] = token.split(".");
+  if (!encodedEmail || !expires || !signature || Number(expires) < Math.floor(Date.now() / 1000)) return null;
+  let email: string;
+  try {
+    email = decoder.decode(fromBase64Url(encodedEmail));
+  } catch {
+    return null;
+  }
   await ensureStaffUsersTable();
   const user = await getDb().select().from(staffUsers).where(eq(staffUsers.email, email)).limit(1);
   if (!user[0]) return null;
-  return equal(await sign(`${email}.${expires}`, user[0].passwordHash), signature) ? email : null;
+  return equal(await sign(`${encodedEmail}.${expires}`, user[0].passwordHash), signature) ? email : null;
 }
 
 export function sessionCookie(token: string) {
