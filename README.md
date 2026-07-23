@@ -98,12 +98,26 @@ This project uses D1 for the staff portal and R2 for sermon audio. Its Cloudflar
 Worker configuration already points to the church's production D1 database.
 
 1. Apply [`drizzle/0000_mature_the_call.sql`](drizzle/0000_mature_the_call.sql)
-   in the D1 console before enabling staff uploads.
+   and [`drizzle/0001_staff_users.sql`](drizzle/0001_staff_users.sql) in the D1
+   console before enabling staff uploads.
 2. Deploy again. The R2 `SERMONS` binding is provisioned by Wrangler when it is
    absent; do not change its binding name.
 
 To deploy against another D1 database, set `D1_DATABASE_ID` and
 `D1_DATABASE_NAME` in that deployment environment.
+
+## Staff sign-in
+
+The `/admin` portal uses the church's own email-and-password sign-in, not
+Cloudflare Access. In Cloudflare, add these **Secrets** before the first staff
+sign-in:
+
+- `ADMIN_EMAIL`: the first staff member's email address
+- `ADMIN_PASSWORD`: a strong, unique password
+- `ADMIN_SESSION_SECRET`: a long random value used to sign staff sessions
+
+The first successful sign-in creates a PBKDF2-hashed password record in D1.
+After that, the portal uses the stored hash rather than the bootstrap password.
 
 ## Learn More
 
