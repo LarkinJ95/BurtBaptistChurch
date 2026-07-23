@@ -7,6 +7,7 @@ import { staffUsers } from "../db/schema";
 const COOKIE_NAME = "burt_staff_session";
 const SESSION_SECONDS = 60 * 60 * 12;
 const encoder = new TextEncoder();
+// Session fields are period-delimited, so encode email addresses before signing.
 const decoder = new TextDecoder();
 
 type AuthEnv = { ADMIN_EMAIL?: string; ADMIN_PASSWORD?: string };
