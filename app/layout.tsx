@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./admin.css";
+import "./inner-logo.css";
 import "./brand.css";
 import "./remove-give.css";
 import "./logo-scale.css";
