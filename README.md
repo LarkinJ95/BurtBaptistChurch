@@ -97,9 +97,10 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 This project uses D1 for the staff portal and R2 for sermon audio. Its Cloudflare
 Worker configuration already points to the church's production D1 database.
 
-1. Apply [`drizzle/0000_mature_the_call.sql`](drizzle/0000_mature_the_call.sql)
-   and [`drizzle/0001_staff_users.sql`](drizzle/0001_staff_users.sql) in the D1
-   console before enabling staff uploads.
+1. Apply [`drizzle/0000_mature_the_call.sql`](drizzle/0000_mature_the_call.sql),
+   [`drizzle/0001_staff_users.sql`](drizzle/0001_staff_users.sql), and
+   [`drizzle/0002_sermon_outlines_and_pdfs.sql`](drizzle/0002_sermon_outlines_and_pdfs.sql)
+   in the D1 console before enabling staff uploads.
 2. Deploy again. The R2 `SERMONS` binding is provisioned by Wrangler when it is
    absent; do not change its binding name.
 
