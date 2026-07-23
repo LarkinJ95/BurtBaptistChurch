@@ -13,6 +13,8 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const problem = message.includes("binding `DB`") ? "d1-binding" : "database";
-    return Response.redirect(new URL(`/admin?error=${problem}`, request.url), 303);
+    const url = new URL(`/admin?error=${problem}`, request.url);
+    if (message) url.searchParams.set("reason", message.slice(0, 180));
+    return Response.redirect(url, 303);
   }
 }
