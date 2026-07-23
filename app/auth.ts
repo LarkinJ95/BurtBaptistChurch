@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
-import { getDb } from "../db";
+import { ensureStaffUsersTable, getDb } from "../db";
 import { staffUsers } from "../db/schema";
 
 const COOKIE_NAME = "burt_staff_session";
@@ -43,6 +43,7 @@ async function verifyPassword(password: string, stored: string) {
 export async function authenticateStaff(emailInput: string, password: string) {
   const email = emailInput.trim().toLowerCase();
   if (!email || !password) return null;
+  await ensureStaffUsersTable();
   const db = getDb();
   const user = await db.select().from(staffUsers).where(eq(staffUsers.email, email)).limit(1);
   if (user[0]) return (await verifyPassword(password, user[0].passwordHash)) ? { email: user[0].email, sessionKey: user[0].passwordHash } : null;
@@ -68,6 +69,7 @@ export async function getCurrentAdmin() {
   if (!token) return null;
   const [email, expires, signature] = token.split(".");
   if (!email || !expires || !signature || Number(expires) < Math.floor(Date.now() / 1000)) return null;
+  await ensureStaffUsersTable();
   const user = await getDb().select().from(staffUsers).where(eq(staffUsers.email, email)).limit(1);
   if (!user[0]) return null;
   return equal(await sign(`${email}.${expires}`, user[0].passwordHash), signature) ? email : null;

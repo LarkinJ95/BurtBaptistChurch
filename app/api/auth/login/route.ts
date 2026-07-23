@@ -10,7 +10,9 @@ export async function POST(request: Request) {
     const response = Response.redirect(new URL("/admin", request.url), 303);
     response.headers.set("Set-Cookie", sessionCookie(await createSession(staff.email, staff.sessionKey)));
     return response;
-  } catch {
-    return Response.redirect(new URL("/admin?error=setup", request.url), 303);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const problem = message.includes("binding `DB`") ? "d1-binding" : "database";
+    return Response.redirect(new URL(`/admin?error=${problem}`, request.url), 303);
   }
 }
