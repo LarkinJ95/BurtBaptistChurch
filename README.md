@@ -119,6 +119,8 @@ sign-in:
 
 The first successful sign-in creates a PBKDF2-hashed password record in D1.
 After that, the portal uses the stored hash rather than the bootstrap password.
+`ADMIN_SESSION_SECRET` is recommended; until it is configured, the app uses the
+bootstrap password to sign sessions so first sign-in is not blocked.
 
 ## Learn More
 

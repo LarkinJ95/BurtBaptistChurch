@@ -14,7 +14,10 @@ const base64Url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).rep
 const fromBase64Url = (value: string) => Uint8Array.from(atob(value.replaceAll("-", "+").replaceAll("_", "/") + "=".repeat((4 - (value.length % 4)) % 4)), (character) => character.charCodeAt(0));
 
 function sessionSecret() {
-  const secret = authEnv().ADMIN_SESSION_SECRET;
+  // A separate high-entropy secret is preferred. Falling back to the bootstrap
+  // password keeps the first staff sign-in working on Workers setups where a
+  // runtime secret has not yet been added.
+  const secret = authEnv().ADMIN_SESSION_SECRET ?? authEnv().ADMIN_PASSWORD;
   if (!secret) throw new Error("Staff sign-in is not configured");
   return secret;
 }
