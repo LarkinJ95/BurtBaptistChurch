@@ -99,7 +99,7 @@ starter placeholder D1 id is valid only for local previews, not for a live
 Cloudflare deployment.
 
 1. Create a D1 database in the target Cloudflare account (for example,
-   `burt-baptist-church`) and copy its database UUID.
+   `burtbaptistchurch`) and copy its database UUID.
 2. In the Cloudflare project's build environment, add `D1_DATABASE_ID` with
    that UUID and `D1_DATABASE_NAME` with the database name.
 3. Apply [`drizzle/0000_mature_the_call.sql`](drizzle/0000_mature_the_call.sql)

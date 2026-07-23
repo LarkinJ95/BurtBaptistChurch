@@ -11,7 +11,7 @@ const { d1, r2 } = hostingConfig;
 // The placeholder remains only for local Miniflare and Sites-managed previews.
 const d1DatabaseId =
   process.env.D1_DATABASE_ID ?? SITE_CREATOR_PLACEHOLDER_DATABASE_ID;
-const d1DatabaseName = process.env.D1_DATABASE_NAME ?? "burt-baptist-church";
+const d1DatabaseName = process.env.D1_DATABASE_NAME ?? "burtbaptistchurch";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
