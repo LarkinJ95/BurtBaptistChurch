@@ -7,10 +7,10 @@ const BURT_BAPTIST_D1_DATABASE_ID = "fb837618-77e7-4541-b93c-27201bbef000";
 
 const { d1, r2 } = hostingConfig;
 // Use the church's production database by default. A build variable can still
-// override this when deploying a separate environment.
+// override its UUID when deploying a separate environment.
 const d1DatabaseId =
   process.env.D1_DATABASE_ID ?? BURT_BAPTIST_D1_DATABASE_ID;
-const d1DatabaseName = process.env.D1_DATABASE_NAME ?? "burtbaptistchurch";
+const d1DatabaseName = "burtbaptistchurch";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
