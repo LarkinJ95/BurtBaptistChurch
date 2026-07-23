@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import { getLegacySermon } from "../../../../sermons/legacy";
 
 export async function GET(_: Request, { params }: { params: Promise<{ slug: string; asset: string }> }) {
@@ -6,7 +7,13 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
   const sermon = await getLegacySermon(slug);
   const assetUrl = asset === "audio" ? sermon?.audioUrl : sermon?.pdfUrl;
   if (!assetUrl) return new Response("File not found", { status: 404 });
+  const cacheKey = `legacy-sermons/${slug}.${asset === "pdf" ? "pdf" : "audio"}`;
+  const cached = await env.SERMONS.get(cacheKey);
+  if (cached) return new Response(cached.body, { headers: { "content-type": cached.httpMetadata?.contentType ?? (asset === "pdf" ? "application/pdf" : "audio/mpeg"), "cache-control": "public, max-age=31536000, immutable" } });
   const response = await fetch(assetUrl);
   if (!response.ok || !response.body) return new Response("File not found", { status: 404 });
-  return new Response(response.body, { headers: { "content-type": response.headers.get("content-type") ?? (asset === "pdf" ? "application/pdf" : "audio/mpeg"), "cache-control": "public, max-age=86400" } });
+  const contentType = response.headers.get("content-type") ?? (asset === "pdf" ? "application/pdf" : "audio/mpeg");
+  const [cacheBody, clientBody] = response.body.tee();
+  await env.SERMONS.put(cacheKey, cacheBody, { httpMetadata: { contentType } });
+  return new Response(clientBody, { headers: { "content-type": contentType, "cache-control": "public, max-age=31536000, immutable" } });
 }
