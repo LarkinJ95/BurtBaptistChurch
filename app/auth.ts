@@ -8,22 +8,13 @@ const COOKIE_NAME = "burt_staff_session";
 const SESSION_SECONDS = 60 * 60 * 12;
 const encoder = new TextEncoder();
 
-type AuthEnv = { ADMIN_EMAIL?: string; ADMIN_PASSWORD?: string; ADMIN_SESSION_SECRET?: string };
+type AuthEnv = { ADMIN_EMAIL?: string; ADMIN_PASSWORD?: string };
 const authEnv = () => env as unknown as AuthEnv;
 const base64Url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 const fromBase64Url = (value: string) => Uint8Array.from(atob(value.replaceAll("-", "+").replaceAll("_", "/") + "=".repeat((4 - (value.length % 4)) % 4)), (character) => character.charCodeAt(0));
 
-function sessionSecret() {
-  // A separate high-entropy secret is preferred. Falling back to the bootstrap
-  // password keeps the first staff sign-in working on Workers setups where a
-  // runtime secret has not yet been added.
-  const secret = authEnv().ADMIN_SESSION_SECRET ?? authEnv().ADMIN_PASSWORD;
-  if (!secret) throw new Error("Staff sign-in is not configured");
-  return secret;
-}
-
-async function sign(value: string) {
-  const key = await crypto.subtle.importKey("raw", encoder.encode(sessionSecret()), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+async function sign(value: string, keyMaterial: string) {
+  const key = await crypto.subtle.importKey("raw", encoder.encode(keyMaterial), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return base64Url(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(value))));
 }
 
@@ -54,20 +45,22 @@ export async function authenticateStaff(emailInput: string, password: string) {
   if (!email || !password) return null;
   const db = getDb();
   const user = await db.select().from(staffUsers).where(eq(staffUsers.email, email)).limit(1);
-  if (user[0]) return (await verifyPassword(password, user[0].passwordHash)) ? user[0].email : null;
+  if (user[0]) return (await verifyPassword(password, user[0].passwordHash)) ? { email: user[0].email, sessionKey: user[0].passwordHash } : null;
 
   const configuredEmail = authEnv().ADMIN_EMAIL?.trim().toLowerCase();
   const configuredPassword = authEnv().ADMIN_PASSWORD;
   const anyUser = await db.select({ id: staffUsers.id }).from(staffUsers).limit(1);
-  if (anyUser[0] || !configuredEmail || !configuredPassword || email !== configuredEmail || !equal(password, configuredPassword)) return null;
-  await db.insert(staffUsers).values({ email, passwordHash: await hashPassword(password), createdAt: new Date() });
-  return email;
+  if (anyUser[0] || password.length < 12) return null;
+  if (configuredEmail && configuredPassword && (email !== configuredEmail || !equal(password, configuredPassword))) return null;
+  const passwordHash = await hashPassword(password);
+  await db.insert(staffUsers).values({ email, passwordHash, createdAt: new Date() });
+  return { email, sessionKey: passwordHash };
 }
 
-export async function createSession(email: string) {
+export async function createSession(email: string, sessionKey: string) {
   const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
   const payload = `${email}.${expires}`;
-  return `${payload}.${await sign(payload)}`;
+  return `${payload}.${await sign(payload, sessionKey)}`;
 }
 
 export async function getCurrentAdmin() {
@@ -75,7 +68,9 @@ export async function getCurrentAdmin() {
   if (!token) return null;
   const [email, expires, signature] = token.split(".");
   if (!email || !expires || !signature || Number(expires) < Math.floor(Date.now() / 1000)) return null;
-  return equal(await sign(`${email}.${expires}`), signature) ? email : null;
+  const user = await getDb().select().from(staffUsers).where(eq(staffUsers.email, email)).limit(1);
+  if (!user[0]) return null;
+  return equal(await sign(`${email}.${expires}`, user[0].passwordHash), signature) ? email : null;
 }
 
 export function sessionCookie(token: string) {

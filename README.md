@@ -110,17 +110,14 @@ To deploy against another D1 database, set `D1_DATABASE_ID` and
 ## Staff sign-in
 
 The `/admin` portal uses the church's own email-and-password sign-in, not
-Cloudflare Access. In Cloudflare, add these **Secrets** before the first staff
-sign-in:
+Cloudflare Access. On a new D1 database, the first email/password sign-in
+(with a password of at least 12 characters) creates the first staff account.
+Passwords are stored only as PBKDF2 hashes in D1, and sessions are signed using
+the account's stored hash.
 
-- `ADMIN_EMAIL`: the first staff member's email address
-- `ADMIN_PASSWORD`: a strong, unique password
-- `ADMIN_SESSION_SECRET`: a long random value used to sign staff sessions
-
-The first successful sign-in creates a PBKDF2-hashed password record in D1.
-After that, the portal uses the stored hash rather than the bootstrap password.
-`ADMIN_SESSION_SECRET` is recommended; until it is configured, the app uses the
-bootstrap password to sign sessions so first sign-in is not blocked.
+Optionally set `ADMIN_EMAIL` and `ADMIN_PASSWORD` as Cloudflare secrets to
+restrict which credentials can create that first account. They are not required
+for normal staff sign-in.
 
 ## Learn More
 
