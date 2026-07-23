@@ -16,12 +16,12 @@ export async function ensureStaffUsersTable() {
   if (!env.DB) {
     throw new Error("D1 binding `DB` is unavailable");
   }
-  await env.DB.exec(`
+  await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS staff_users (
       id integer PRIMARY KEY NOT NULL,
       email text NOT NULL UNIQUE,
       password_hash text NOT NULL,
       created_at integer NOT NULL
-    );
-  `);
+    )
+  `).run();
 }
