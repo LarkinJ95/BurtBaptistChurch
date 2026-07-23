@@ -104,8 +104,8 @@ Worker configuration already points to the church's production D1 database.
 2. Deploy again. The R2 `SERMONS` binding is provisioned by Wrangler when it is
    absent; do not change its binding name.
 
-To deploy against another D1 database, set `D1_DATABASE_ID` and
-`D1_DATABASE_NAME` in that deployment environment.
+To deploy against another D1 database, update the database UUID and name in
+[`vite.config.ts`](vite.config.ts) before deploying that environment.
 
 ## Staff sign-in
 

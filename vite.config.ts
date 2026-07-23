@@ -6,10 +6,9 @@ import { sites } from "./build/sites-vite-plugin";
 const BURT_BAPTIST_D1_DATABASE_ID = "fb837618-77e7-4541-b93c-27201bbef000";
 
 const { d1, r2 } = hostingConfig;
-// Use the church's production database by default. A build variable can still
-// override its UUID when deploying a separate environment.
-const d1DatabaseId =
-  process.env.D1_DATABASE_ID ?? BURT_BAPTIST_D1_DATABASE_ID;
+// Lock this deployment to the church's production database. Cloudflare build
+// variables must not be allowed to substitute a stale D1 UUID.
+const d1DatabaseId = BURT_BAPTIST_D1_DATABASE_ID;
 const d1DatabaseName = "burtbaptistchurch";
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
