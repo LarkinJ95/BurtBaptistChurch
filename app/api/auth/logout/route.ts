@@ -1,7 +1,11 @@
 import { clearedSessionCookie } from "../../../auth";
 
 export async function POST(request: Request) {
-  const response = Response.redirect(new URL("/admin", request.url), 303);
-  response.headers.set("Set-Cookie", clearedSessionCookie);
-  return response;
+  return new Response(null, {
+    status: 303,
+    headers: {
+      Location: new URL("/admin", request.url).toString(),
+      "Set-Cookie": clearedSessionCookie,
+    },
+  });
 }

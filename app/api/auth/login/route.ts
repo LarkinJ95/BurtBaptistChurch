@@ -7,9 +7,13 @@ export async function POST(request: Request) {
     const password = String(form.get("password") || "");
     const staff = await authenticateStaff(email, password);
     if (!staff) return Response.redirect(new URL("/admin?error=invalid-login", request.url), 303);
-    const response = Response.redirect(new URL("/admin", request.url), 303);
-    response.headers.set("Set-Cookie", sessionCookie(await createSession(staff.email, staff.sessionKey)));
-    return response;
+    return new Response(null, {
+      status: 303,
+      headers: {
+        Location: new URL("/admin", request.url).toString(),
+        "Set-Cookie": sessionCookie(await createSession(staff.email, staff.sessionKey)),
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     const problem = message.includes("binding `DB`") ? "d1-binding" : "database";
