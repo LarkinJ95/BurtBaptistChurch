@@ -111,7 +111,7 @@ To deploy against another D1 database, set `D1_DATABASE_ID` and
 
 The `/admin` portal uses the church's own email-and-password sign-in, not
 Cloudflare Access. On a new D1 database, the first email/password sign-in
-(with a password of at least 12 characters) creates the first staff account.
+(with a password of at least 6 characters) creates the first staff account.
 Passwords are stored only as PBKDF2 hashes in D1, and sessions are signed using
 the account's stored hash.
 

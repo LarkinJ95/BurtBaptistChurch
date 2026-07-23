@@ -50,7 +50,7 @@ export async function authenticateStaff(emailInput: string, password: string) {
   const configuredEmail = authEnv().ADMIN_EMAIL?.trim().toLowerCase();
   const configuredPassword = authEnv().ADMIN_PASSWORD;
   const anyUser = await db.select({ id: staffUsers.id }).from(staffUsers).limit(1);
-  if (anyUser[0] || password.length < 12) return null;
+  if (anyUser[0] || password.length < 6) return null;
   if (configuredEmail && configuredPassword && (email !== configuredEmail || !equal(password, configuredPassword))) return null;
   const passwordHash = await hashPassword(password);
   await db.insert(staffUsers).values({ email, passwordHash, createdAt: new Date() });
