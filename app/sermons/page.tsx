@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { desc } from "drizzle-orm";
-import { getDb } from "../../db";
+import { ensureContentManagementTables, getDb } from "../../db";
 import { sermons } from "../../db/schema";
 import liveSermons from "./live-sermons.json";
 import { legacySlug } from "./legacy";
@@ -13,8 +13,13 @@ type DisplayMessage = { id: string | number; title: string; sermonDate: string; 
 
 export default async function SermonsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   let uploaded: typeof sermons.$inferSelect[] = [];
-  try { uploaded = await getDb().select().from(sermons).orderBy(desc(sermons.sermonDate)); } catch { /* The archive remains available before its first upload. */ }
-  const messages: DisplayMessage[] = [...uploaded.map((message) => ({ ...message })), ...liveSermons.map((message) => ({ id: `live-${message.url}`, title: message.title, sermonDate: message.date, speaker: message.speaker, description: null, mediaUrl: null, audioKey: null, liveUrl: legacySlug(message.url) }))];
+  try { await ensureContentManagementTables(); uploaded = await getDb().select().from(sermons).orderBy(desc(sermons.sermonDate)); } catch { /* The archive remains available before its first upload. */ }
+  const legacyOverrides = new Map(uploaded.filter((message) => message.legacyUrl).map((message) => [message.legacyUrl!, message]));
+  const originalMessages = uploaded.filter((message) => !message.legacyUrl);
+  const messages: DisplayMessage[] = [...originalMessages.map((message) => ({ ...message })), ...liveSermons.map((message) => {
+    const override = legacyOverrides.get(message.url);
+    return { id: `live-${message.url}`, title: override?.title ?? message.title, sermonDate: override?.sermonDate ?? message.date, speaker: override?.speaker ?? message.speaker, description: override?.description ?? null, mediaUrl: override?.mediaUrl ?? null, audioKey: override?.audioKey ?? null, liveUrl: legacySlug(message.url) };
+  })];
   const { page: pageInput } = await searchParams;
   const totalPages = Math.max(1, Math.ceil(messages.length / PAGE_SIZE));
   const requestedPage = Number.parseInt(pageInput ?? "1", 10);

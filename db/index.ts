@@ -25,3 +25,23 @@ export async function ensureStaffUsersTable() {
     )
   `).run();
 }
+
+export async function ensureContentManagementTables() {
+  if (!env.DB) throw new Error("D1 binding `DB` is unavailable");
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS content_entries (
+      id integer PRIMARY KEY NOT NULL,
+      type text NOT NULL,
+      slug text NOT NULL UNIQUE,
+      eyebrow text,
+      title text NOT NULL,
+      body text NOT NULL,
+      updated_at integer NOT NULL
+    )
+  `).run();
+  const columns = await env.DB.prepare("PRAGMA table_info(sermons)").all<{ name: string }>();
+  if (!columns.results.some((column) => column.name === "legacy_url")) {
+    await env.DB.prepare("ALTER TABLE sermons ADD COLUMN legacy_url text").run();
+    await env.DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS sermons_legacy_url_unique ON sermons(legacy_url)").run();
+  }
+}

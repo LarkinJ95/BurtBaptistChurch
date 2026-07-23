@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
-import { getDb } from "../../../db";
+import { ensureContentManagementTables, getDb } from "../../../db";
 import { sermons } from "../../../db/schema";
-import { getLegacySermon } from "../legacy";
+import { findLegacySermon, getLegacySermon } from "../legacy";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,9 @@ export default async function SermonDetailPage({ params }: { params: Promise<{ s
   }
   const sermon = await getLegacySermon(slug);
   if (!sermon) return <main className="inner-page"><section className="archive"><h1>Message not found</h1><Link href="/sermons">Back to sermons</Link></section></main>;
-  return <SermonView title={sermon.title} date={sermon.date} speaker={sermon.speaker} description={null} outline={sermon.outline} audioUrl={sermon.audioUrl ? `/api/legacy-sermons/${sermon.slug}/audio` : null} pdfUrl={sermon.pdfUrl ? `/api/legacy-sermons/${sermon.slug}/pdf` : null} />;
+  let override: typeof sermons.$inferSelect | undefined;
+  try { await ensureContentManagementTables(); const original = findLegacySermon(slug); if (original) override = await getDb().select().from(sermons).where(eq(sermons.legacyUrl, original.url)).get(); } catch { /* Original archive remains available if D1 is temporarily unavailable. */ }
+  return <SermonView title={override?.title ?? sermon.title} date={override?.sermonDate ?? sermon.date} speaker={override?.speaker ?? sermon.speaker} description={override?.description ?? null} outline={override?.outline?.split(/\n\s*\n/).filter(Boolean) ?? sermon.outline} audioUrl={override?.audioKey ? `/api/sermons/${override.id}/audio` : override?.mediaUrl || (sermon.audioUrl ? `/api/legacy-sermons/${sermon.slug}/audio` : null)} pdfUrl={override?.pdfKey ? `/api/sermons/${override.id}/pdf` : (sermon.pdfUrl ? `/api/legacy-sermons/${sermon.slug}/pdf` : null)} />;
 }
 
 function SermonView({ title, date, speaker, description, outline, audioUrl, pdfUrl }: { title: string; date: string; speaker: string; description: string | null; outline: string[]; audioUrl: string | null; pdfUrl: string | null }) {
