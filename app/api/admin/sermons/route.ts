@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { ensureContentManagementTables, getDb } from "../../../../db";
 import { sermons } from "../../../../db/schema";
 import { requireAdmin } from "../_auth";
+import { sanitizeRichText } from "../../../sermons/rich-text";
 
 const safeName = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, "-");
 
@@ -16,8 +17,8 @@ export async function POST(request: Request) {
     const title = String(form.get("title") || "").trim();
     const speaker = String(form.get("speaker") || "").trim();
     const sermonDate = String(form.get("sermonDate") || "");
-    const description = String(form.get("description") || "").trim();
-    const outline = String(form.get("outline") || "").trim();
+    const description = sanitizeRichText(String(form.get("description") || ""));
+    const outline = sanitizeRichText(String(form.get("outline") || ""));
     const mediaUrl = String(form.get("mediaUrl") || "").trim();
     const audio = form.get("audio");
     const pdf = form.get("pdf");

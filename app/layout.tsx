@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./admin.css";
 import "./contact-form.css";
+import "./rich-text.css";
 import "./brand.css";
 import "./remove-give.css";
 import "./logo-scale.css";
