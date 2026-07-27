@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { getCurrentAdmin } from "../auth";
 import { ensureContentManagementTables, getDb } from "../../db";
-import { contentEntries, sermons } from "../../db/schema";
-import liveSermons from "../sermons/live-sermons.json";
-import { legacySlug } from "../sermons/legacy";
+import { contentEntries } from "../../db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -20,24 +18,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   if (!email) return <Login error={error} reason={reason} />;
 
   let entries: typeof contentEntries.$inferSelect[] = [];
-  let uploaded: typeof sermons.$inferSelect[] = [];
   try {
     await ensureContentManagementTables();
-    [entries, uploaded] = await Promise.all([
-      getDb().select().from(contentEntries).orderBy(desc(contentEntries.updatedAt)),
-      getDb().select().from(sermons).orderBy(desc(sermons.sermonDate)),
-    ]);
+    entries = await getDb().select().from(contentEntries).orderBy(desc(contentEntries.updatedAt));
   } catch { /* The portal remains usable after a newly connected D1 database is initialized. */ }
   const pageEntries = new Map(entries.filter((entry) => entry.type === "page").map((entry) => [entry.slug, entry]));
   const posts = entries.filter((entry) => entry.type === "post");
-  const overrides = new Map(uploaded.filter((sermon) => sermon.legacyUrl).map((sermon) => [sermon.legacyUrl!, sermon]));
-  const archive = (liveSermons as { title: string; date: string; speaker: string; url: string }[]).map((sermon) => ({ ...sermon, override: overrides.get(sermon.url) })).slice(0, 24);
 
   return <main className="admin-shell">
     <header className="admin-header"><Link className="admin-brand" href="/">← Burt Baptist Church</Link><div className="admin-account"><span>Signed in as {email}</span><form action="/api/auth/logout" method="post"><button type="submit">Sign out</button></form></div></header>
     <section className="admin-intro"><p className="eyebrow">Staff portal</p><h1>Manage every<br /><i>church update.</i></h1><p>Edit published sermons, page copy, and church posts from one place.</p>{updated && <p className="admin-success">Saved successfully.</p>}</section>
 
-    <section className="admin-card admin-library"><div className="admin-card-heading"><div><p className="eyebrow">Sermon library</p><h2>Past and present messages</h2></div><Link className="button button-dark" href="/admin/sermons/new">Add a sermon <span>→</span></Link></div><p className="admin-help">Every historic sermon is editable. Changes create an app-owned version with your revised description, outline, audio, and PDF while preserving the original archive as a fallback.</p><div className="admin-list">{archive.map((sermon) => <article className="admin-list-row" key={sermon.url}><div><p className="sermon-meta">{sermon.override?.sermonDate ?? sermon.date} · {sermon.override?.speaker ?? sermon.speaker}</p><h3>{sermon.override?.title ?? sermon.title}</h3><small>{sermon.override ? "Customized in your library" : "Imported archive"}</small></div><Link href={`/admin/sermons/${legacySlug(sermon.url)}`}>{sermon.override ? "Edit" : "Customize"} →</Link></article>)}</div><Link className="text-link" href="/admin/sermons">Browse all {liveSermons.length} archived sermons <span>→</span></Link></section>
+    <section className="admin-card sermon-actions-card"><p className="eyebrow">Sermon library</p><h2>Messages</h2><p className="admin-help">Create a new message or open the separate archive to update a past sermon.</p><div className="sermon-admin-actions"><Link className="button button-dark" href="/admin/sermons">Edit a past sermon <span>→</span></Link><Link className="button button-gold" href="/admin/sermons/new">Add new sermon <span>→</span></Link></div></section>
 
     <section className="admin-card admin-library"><div className="admin-card-heading"><div><p className="eyebrow">Pages</p><h2>Website page copy</h2></div></div><div className="admin-editor-grid">{editablePages.map((fallback) => { const entry = pageEntries.get(fallback.slug); return <form className="admin-editor" action="/api/admin/content" method="post" key={fallback.slug}><input type="hidden" name="kind" value="page" /><input type="hidden" name="slug" value={fallback.slug} /><p className="eyebrow">/{fallback.slug === "home" ? "" : fallback.slug}</p><label>Section label<input name="eyebrow" defaultValue={entry?.eyebrow ?? fallback.eyebrow} /></label><label>Headline<input name="title" required defaultValue={entry?.title ?? fallback.title} /></label><label>Body copy<textarea name="body" required defaultValue={entry?.body ?? fallback.body} /></label><button className="button button-dark">Save {fallback.slug} page <span>→</span></button></form>; })}</div><form className="admin-editor new-page-editor" action="/api/admin/content" method="post"><input type="hidden" name="kind" value="page" /><p className="eyebrow">Additional page</p><label>Page URL<input name="slug" required placeholder="our-staff" /></label><label>Section label<input name="eyebrow" placeholder="Meet the team" /></label><label>Headline<input name="title" required placeholder="Our staff" /></label><label>Body copy<textarea name="body" required placeholder="Write the page content here." /></label><button className="button button-dark">Publish page <span>→</span></button></form></section>
 
