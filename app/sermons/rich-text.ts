@@ -10,7 +10,9 @@ export function sanitizeRichText(value: string) {
     const name = rawName.toLowerCase();
     if (!allowedTags.has(name)) return "";
     if (tag.startsWith("</")) return `</${name}>`;
-    if (name !== "a") return `<${name}>`;
+    const alignment = attributes.match(/(?:text-align\s*:\s*|align\s*=\s*["']?)(left|center|right|justify)/i)?.[1]?.toLowerCase();
+    const alignAttribute = alignment ? ` style="text-align:${alignment}"` : "";
+    if (name !== "a") return `<${name}${alignAttribute}>`;
     const href = attributes.match(/href\s*=\s*["']([^"']+)["']/i)?.[1] ?? "";
     return /^(https?:|mailto:|\/)/i.test(href) ? `<a href="${escapeHtml(href)}" rel="noreferrer">` : "<a>";
   });
