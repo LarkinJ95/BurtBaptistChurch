@@ -5,6 +5,7 @@ import "./admin.css";
 import "./admin-actions.css";
 import "./contact-form.css";
 import "./rich-text.css";
+import "./home-services.css";
 import "./brand.css";
 import "./remove-give.css";
 import "./logo-scale.css";
